@@ -1,0 +1,28 @@
+{
+  "name": "visualization-being",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "vite dev --port 3066",
+    "build": "vite run build"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@iconify-json/fa7-brands": "^1.2.4",
+    "@iconify-json/fa7-solid": "^1.2.5",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@types/three": "^0.187.0",
+    "d3-delaunay": "^6.0.6",
+    "svelte": "^5.57.0",
+    "three": "^0.187.0",
+    "three-stdlib": "^2.36.1",
+    "unocss": "^66.10.5",
+    "vite": "^8.3.0"
+  }
+}

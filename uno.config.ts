@@ -1,0 +1,147 @@
+import { readFileSync, existsSync } from "fs";
+import path from "path";
+import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
+
+import { defineConfig, presetWind4, transformerDirectives } from "unocss";
+import transformerVariantGroup from "@unocss/transformer-variant-group";
+import presetIcons from "@unocss/preset-icons";
+import presetWebFonts from "@unocss/preset-web-fonts";
+import { createLocalFontProcessor } from "@unocss/preset-web-fonts/local";
+
+const FLEX_ALIGNS: Record<string, string> = {
+  c: "center",
+  e: "flex-end",
+  s: "flex-start",
+  _: "stretch",
+};
+
+import presetAttributify from "@unocss/preset-attributify";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+function getFontsCacheDir(workDirHash: string) {
+  return path.join(
+    __dirname,
+    `node_modules/.cache/unocss/fonts/${workDirHash}`,
+  );
+}
+
+export function getFontsDir(workDirHash: string) {
+  return path.join(getFontsCacheDir(workDirHash), "fonts");
+}
+
+export default defineConfig({
+  presets: [
+    presetIcons({
+      collections: {
+        fa: () =>
+          import("@iconify-json/fa7-solid/icons.json").then((i) => i.default),
+        "fa-brands": () =>
+          import("@iconify-json/fa7-brands/icons.json").then((i) => i.default),
+      },
+    }),
+    presetWind4(),
+    presetAttributify({
+      ignoreAttributes: ["font-size", "stroke-width", "fill"],
+    }),
+    // presetWebFonts({
+    //   provider: "google", // default provider
+    //   fonts: fonts,
+
+    //   processors: createLocalFontProcessor({
+    //     // Directory to cache the fonts
+    //     cacheDir: getFontsCacheDir(workDirHash),
+
+    //     // Directory to save the fonts assets
+    //     fontAssetsDir: getFontsDir(workDirHash),
+
+    //     fontServeBaseUrl: "/@fonts",
+    //   }),
+    // }),
+  ],
+  transformers: [transformerVariantGroup(), transformerDirectives()],
+  rules: [
+    [
+      /^flex-([cse_])([cse_])$/,
+      ([, c1, c2]) => ({
+        display: "flex",
+        "align-items": FLEX_ALIGNS[c1!],
+        "justify-content": FLEX_ALIGNS[c2!],
+      }),
+    ],
+  ],
+  variants: [
+    (matcher) => {
+      if (!matcher.startsWith("hocus:")) return matcher;
+
+      return {
+        // slice `hover:` prefix and passed to the next variants and rules
+        matcher: matcher.slice(6),
+        selector: (s) => `${s}:hover, ${s}:focus`,
+      };
+    },
+    (matcher) => {
+      const variant = "placeholder-shown";
+      if (!matcher.includes(variant)) return matcher;
+      const isNot = matcher.startsWith("not-");
+      return {
+        // slice `hover:` prefix and passed to the next variants and rules
+        matcher: isNot
+          ? matcher.slice(variant.length + 5)
+          : matcher.slice(variant.length + 1),
+        selector: (input) =>
+          isNot
+            ? `${input}:not(:placeholder-shown)`
+            : `${input}:placeholder-shown`,
+      };
+    },
+  ],
+  extendTheme: (theme: any) => {
+    return {
+      ...theme,
+      breakpoints: {
+        xs: "360px",
+        sm: "640px",
+        md: "768px",
+        lg: "1024px",
+        xl: "1280px",
+        "2xl": "1536px",
+      },
+      colors: {
+        ...theme.colors,
+        potato: "red",
+        main: (() => {
+          let colors: [string, string][] = [];
+          for (let i = 10; i <= 90; i += 10) {
+            colors.push([
+              `${i}0`,
+              `hsl(var(--main-hue) var(--main-saturation) ${100 - i}%)`,
+            ]);
+          }
+          colors.push([
+            `50`,
+            `hsl(var(--main-hue) var(--main-saturation) 95%)`,
+          ]);
+          colors.push([
+            `950`,
+            `hsl(var(--main-hue) var(--main-saturation) 5%)`,
+          ]);
+          return Object.fromEntries(colors);
+        })(),
+
+        alt: (() => {
+          let colors: [string, string][] = [];
+          for (let i = 10; i <= 90; i += 10) {
+            colors.push([
+              `${i}0`,
+              `hsl(var(--alt-hue) var(--alt-saturation) ${100 - i}%)`,
+            ]);
+          }
+          colors.push([`50`, `hsl(var(--alt-hue) var(--alt-saturation) 95%)`]);
+          colors.push([`950`, `hsl(var(--alt-hue) var(--alt-saturation) 5%)`]);
+          return Object.fromEntries(colors);
+        })(),
+      },
+    };
+  },
+});
